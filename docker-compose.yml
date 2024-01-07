@@ -1,0 +1,110 @@
+version: "3.8"
+services:
+  hello-service-a:
+    build:
+      context: hello-service
+      dockerfile: build/dev.Dockerfile
+    working_dir: /var/www
+    volumes:
+      - ./hello-service:/var/www
+    networks:
+      telemetry:
+    ports:
+      - "8080:8080"
+    environment:
+      OTEL_PHP_AUTOLOAD_ENABLED: true
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://opentelemetry-collector:4318
+      OTEL_SERVICE_NAME: hello-service-A
+    command: php -S 0.0.0.0:8080 -t public
+
+  hello-service-b:
+    build:
+      context: hello-service
+      dockerfile: build/dev.Dockerfile
+    working_dir: /var/www
+    volumes:
+      - ./hello-service:/var/www
+    networks:
+      telemetry:
+    environment:
+      OTEL_PHP_AUTOLOAD_ENABLED: true
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://opentelemetry-collector:4318
+      OTEL_SERVICE_NAME: hello-service-B
+    command: php -S 0.0.0.0:8080 -t public
+
+  # ********************
+  # Telemetry Components
+  # ********************
+
+  # Open-telemetry opentelemetry-collector
+  # Centralized gateway for log, metrics & tracing collection (traffic controller)
+  opentelemetry-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    networks:
+      telemetry:
+    volumes:
+      - ./opentelemetry-collector/config.yml:/etc/config.yml
+    command: [ "--config=/etc/config.yml" ]
+    ports:
+      - "4318:4318"
+
+  # Jaeger
+  # Traces analyzer
+  jaeger:
+    image: jaegertracing/all-in-one
+    networks:
+      telemetry:
+    ports:
+      - "16686:16686" # Frontend
+
+  # Prometheus
+  # Metrics parser
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    command:
+#      - --web.console.templates=/etc/prometheus/consoles
+#      - --web.console.libraries=/etc/prometheus/console_libraries
+#      - --storage.tsdb.retention.time=1h
+      - --config.file=/etc/prometheus/config.yml
+#      - --storage.tsdb.path=/prometheus
+#      - --web.enable-lifecycle
+#      - --web.route-prefix=/
+#      - --enable-feature=exemplar-storage
+      - --enable-feature=otlp-write-receiver
+    volumes:
+      - ./prometheus/config.yml:/etc/prometheus/config.yml
+    ports:
+      - "9090:9090"
+    networks:
+      telemetry:
+
+  # Loki
+  # Log parser
+  loki:
+    image: grafana/loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      telemetry:
+
+  # Grafana
+  # Data visualization dashboard
+  grafana:
+    image: grafana/grafana
+    networks:
+      telemetry:
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - opentelemetry-collector
+
+networks:
+  telemetry:
+
+volumes:
+  grafana_data:

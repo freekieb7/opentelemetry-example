@@ -1,0 +1,50 @@
+{
+  "name": "freekieb7/slim-skeleton",
+  "description": "Slim 4 skeleton",
+  "minimum-stability": "stable",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "freekieb7"
+    }
+  ],
+  "require": {
+    "php": "^8.3",
+    "open-telemetry/exporter-otlp": "^1.0",
+    "open-telemetry/opentelemetry-auto-psr15": "^1.0",
+    "open-telemetry/opentelemetry-auto-psr18": "^1.0",
+    "open-telemetry/opentelemetry-auto-slim": "^1.0",
+    "open-telemetry/opentelemetry-logger-monolog": "^1.0",
+    "open-telemetry/sdk": "^1.0",
+    "php-di/slim-bridge": "^3.4",
+    "slim/psr7": "^1.6",
+    "slim/slim": "4.*",
+    "symfony/http-client": "^7.0"
+  },
+  "require-dev": {
+    "ext-xdebug": "^3.0",
+    "phpstan/phpstan": "^1.10",
+    "phpunit/phpunit": "^10.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "process-timeout": 0,
+    "sort-packages": true,
+    "allow-plugins": {
+      "php-http/discovery": false
+    }
+  },
+  "scripts": {
+    "test": "./vendor/bin/phpunit --configuration tests/phpunit.xml"
+  }
+}
